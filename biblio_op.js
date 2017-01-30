@@ -22,9 +22,7 @@ var biblio_op = MessageBotExtension('biblio_op');
     var messages = storage.getObject(ex.id + '_messages', []);
 
     ex.tab = ui.addTab('OP Log');
-    ex.tab.innerHTML = '<h3>Info</h3><p>Players can now use /op to send a message to you, which will be saved here until you dismiss it.</p><h3>Saved Messages</h3><input style="width: calc(100% - 5px); font-size:1em;" placeholder="Search..."/><hr><div id="op_msgs"></div>';
-    ex.tab.innerHTML += '<template id="op_template"><div class="item"><span class="name"></span>: <span class="msg"></span><span class="time"></span><span class="dismiss">&times;</span><hr></div></template>';
-    ex.tab.innerHTML += '<style>#op_msgs .hidden { display: none; } #op_msgs .dismiss { #op_msgs .dismiss ; float: right; margin-right: 10px; background: #eaeaea; padding: 3px 4px; line-height: 1em; border-radius: 3px; } #op_msgs .item { position: relative; } #op_msgs .time {color: #909090; font-size: 0.7em; position: absolute; right: 40px; top: -8px;}</style>';
+    ex.tab.innerHTML = '<style>#op_msgs .hidden{display: none;}#op_msgs .dismiss{#op_msgs .dismiss ; float: right; margin-right: 10px; background: #eaeaea; padding: 3px 4px; line-height: 1em; border-radius: 3px;}#op_msgs .item{position: relative;}#op_msgs .time{color: #909090; font-size: 0.7em; position: absolute; right: 40px; top: -8px;}</style><template id="op_template"> <div class="item"> <span class="name"> </span>: <span class="msg"></span> <span class="time"></span> <span class="dismiss">&times;</span> <hr> </div></template><div class="container"> <h3 class="title">Info</h3> <p>Players can now use /op to send a message to you, which will be saved here until you dismiss it.</p><h3 class="title">Saved Messages</h3> <input class="input" placeholder="Search..."/> <hr> <div id="op_msgs"></div></div>';
     messages.forEach(addToPage);
 
     var msgsDiv = ex.tab.querySelector('#op_msgs');
