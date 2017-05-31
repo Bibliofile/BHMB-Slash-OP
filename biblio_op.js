@@ -25,9 +25,9 @@ MessageBot.registerExtension('bibliofile/slash-op', function(ex, world) {
             return;
         }
 
-        addMessage(info.player.getName(), info.message);
+        addMessage(info.player.getName(), info.args);
     }
-    world.onComand.subscribe(opListener);
+    world.onCommand.subscribe(opListener);
 
     ex.uninstall = function() {
         world.onCommand.unsubscribe(opListener);
