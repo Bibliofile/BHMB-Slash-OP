@@ -6,30 +6,51 @@
     devel: true
 */
 /*globals
-    MessageBotExtension
+    MessageBot
 */
 
-var biblio_op = MessageBotExtension('biblio_op');
+MessageBot.registerExtension('bibliofile/slash-op', function(ex, world) {
+    function getMessages() {
+        return world.storage.getObject('biblio_op_messages', []);
+    }
 
-(function(ex, ui, storage, hook) {
-    ex.setAutoLaunch(true);
-    ex.uninstall = function() {
-        ui.removeTab(ex.tab);
-        storage.clearNamespace(ex.id + '_messages');
-        hook.remove('world.command', opListener);
+    var addMessage = function(name, message) {
+        var msgs = getMessages();
+        msgs.push({name: name, message: message, timestamp: Date.now()});
+        world.storage.set('biblio_op_messages', msgs);
     };
 
-    var messages = storage.getObject(ex.id + '_messages', []);
+    function opListener(info) {
+        if (info.command.toLocaleLowerCase() != 'op') {
+            return;
+        }
 
-    ex.tab = ui.addTab('OP Log');
-    ex.tab.innerHTML = '<style>#op_msgs .hidden{display: none;}#op_msgs .dismiss{#op_msgs .dismiss ; float: right; margin-right: 10px; background: #eaeaea; padding: 3px 4px; line-height: 1em; border-radius: 3px;}#op_msgs .item{position: relative;}#op_msgs .time{color: #909090; font-size: 0.7em; position: absolute; right: 40px; top: -8px;}</style><template id="op_template"> <div class="item"> <span class="name"> </span>: <span class="msg"></span> <span class="time"></span> <span class="dismiss">&times;</span> <hr> </div></template><div class="container"> <h3 class="title">Info</h3> <p>Players can now use /op to send a message to you, which will be saved here until you dismiss it.</p><h3 class="title">Saved Messages</h3> <input class="input" placeholder="Search..."/> <hr> <div id="op_msgs"></div></div>';
-    messages.forEach(addToPage);
+        addMessage(info.player.getName(), info.message);
+    }
+    world.onComand.subscribe(opListener);
 
-    var msgsDiv = ex.tab.querySelector('#op_msgs');
-    ex.tab.querySelector('input').addEventListener('keyup', function(e) {
+    ex.uninstall = function() {
+        world.onCommand.unsubscribe(opListener);
+        world.storage.clearNamespace('biblio_op');
+    };
+
+    // Browser only
+    if (ex.isNode || !ex.bot.getExports('ui')) return;
+    function extendFn(orig, fn) {
+        return function() {
+            orig.apply(this, arguments);
+            fn.apply(this, arguments);
+        };
+    }
+
+    var ui = ex.bot.getExports('ui');
+    var tab = ui.addTab('OP Log');
+    tab.innerHTML = '<style>#op_msgs .hidden{display: none;}#op_msgs .dismiss{#op_msgs .dismiss ; float: right; margin-right: 10px; background: #eaeaea; padding: 3px 4px; line-height: 1em; border-radius: 3px;}#op_msgs .item{position: relative;}#op_msgs .time{color: #909090; font-size: 0.7em; position: absolute; right: 40px; top: -8px;}</style><template> <div class="item"> <span class="name"> </span>: <span class="msg"></span> <span class="time"></span> <span class="dismiss">&times;</span> <hr> </div></template><div class="container"> <h3 class="title">Info</h3> <p>Players can now use /op to send a message to you, which will be saved here until you dismiss it.</p><h3 class="title">Saved Messages</h3> <input class="input" placeholder="Search..."/> <hr> <div id="op_msgs"></div></div>';
+
+    tab.querySelector('input').addEventListener('keyup', function(e) {
         var search = e.target.value.toLocaleUpperCase();
 
-        Array.from(msgsDiv.children).forEach(function(child) {
+        Array.from(tab.querySelector('#op_msgs').children).forEach(function(child) {
             if (child.dataset.search.includes(search)) {
                 child.classList.remove('hidden');
             } else {
@@ -38,52 +59,40 @@ var biblio_op = MessageBotExtension('biblio_op');
         });
     });
 
-    ex.tab.querySelector('#op_msgs').addEventListener('click', function(e) {
+    tab.addEventListener('click', function(e) {
         if (e.target.classList.contains('dismiss')) {
             e.target.parentElement.remove();
 
-            save();
+            var messages = [];
+            Array.from(tab.querySelector('#op_msgs').children).forEach(function(child) {
+                messages.push({
+                    name: child.dataset.name,
+                    message: child.dataset.message,
+                    timestamp: child.dataset.timestamp,
+                });
+            });
+
+            world.storage.set('biblio_op_messages', messages);
         }
     });
-
-    function save() {
-        messages = [];
-        Array.from(msgsDiv.children).forEach(function(child) {
-            messages.push({
-                name: child.dataset.name,
-                message: child.dataset.message,
-                timestamp: child.dataset.timestamp,
-            });
-        });
-        storage.set(ex.id + '_messages', messages);
-    }
 
     function addToPage(msg) {
         var time = new Date(+msg.timestamp);
         var timeStr = time.toLocaleDateString() + ', ' + time.toLocaleTimeString();
-        ui.buildContentFromTemplate('#op_template', '#op_msgs', [
+        ui.buildTemplate(tab.querySelector('template'), '#op_msgs', [
             {selector: 'div', 'data-name': msg.name, 'data-message': msg.message, 'data-timestamp': msg.timestamp, 'data-search': msg.name + ': ' + msg.message.toLocaleUpperCase()},
             {selector: '.name', text: msg.name},
             {selector: '.msg', text: msg.message},
             {selector: '.time', text: timeStr},
         ]);
     }
+    getMessages().forEach(addToPage);
 
-    hook.listen('world.command', opListener);
-    function opListener(name, command, message) {
-        command = command.toLocaleLowerCase();
-
-        if (command != 'op') {
-            return;
-        }
-
+    addMessage = extendFn(addMessage, function(name, message) {
         addToPage({name: name, message: message, timestamp: Date.now()});
+    });
 
-        save();
-    }
-}(
-    biblio_op,
-    biblio_op.ui,
-    biblio_op.storage,
-    biblio_op.hook
-));
+    ex.uninstall = extendFn(ex.uninstall, function() {
+        ui.removeTab(tab);
+    });
+});
