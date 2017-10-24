@@ -1,0 +1,22 @@
+{
+  "name": "BHMB-Slash-OP",
+  "version": "1.0.0",
+  "main": "./build/bundle.js",
+  "repository": "https://github.com/Bibliofile/BHMB-Slash-OP.git",
+  "author": "Bibliofile <Bibliofilegit@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "rollup": "^0.50.0",
+    "rollup-plugin-string": "^2.0.2",
+    "rollup-plugin-typescript2": "^0.7.0",
+    "tslint": "^5.8.0",
+    "typescript": "^2.5.3"
+  },
+  "scripts": {
+    "build": "rollup --config"
+  },
+  "dependencies": {
+    "@bhmb/bot": "^7.0.5",
+    "@bhmb/ui": "^1.0.2"
+  }
+}
